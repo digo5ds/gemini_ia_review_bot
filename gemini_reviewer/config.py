@@ -253,37 +253,41 @@ class Config:
         if self.review.custom_prompt_template:
             return self.review.custom_prompt_template
         
-        base_prompt = """Your task is reviewing pull requests. Instructions:
-- Provide the response in following JSON format: {{"reviews": [{{"lineNumber": <line_number>, "reviewComment": "<review comment>"}}]}}
-- Provide comments and suggestions ONLY if there is something to improve, otherwise "reviews" should be an empty array.
-- Use GitHub Markdown in comments
-- IMPORTANT: NEVER suggest adding comments to the code"""
-        
+        base_prompt = """Sua tarefa é atuar como um engenheiro de software sênior revisando pull requests. 
+        Instruções:
+        - Forneça sua resposta estritamente no seguinte formato JSON: 
+        {{"reviews": [{{"lineNumber": <numero_da_linha>, "criticality": "<BAIXA|MÉDIA|ALTA|CRÍTICA>", "reviewComment": "<comentário_com_simbolos>", "suggestion": "<codigo_em_markdown_ou_null>"}}]}}
+        - "criticality": Deve ser classificada apenas como BAIXA, MÉDIA, ALTA ou CRÍTICA.
+        - "reviewComment": Explique o problema de forma clara usando GitHub Markdown. Inicie o comentário com o símbolo adequado (❌ para erros/más práticas, ⚠️ para alertas de atenção, ou ✅ para indicar o padrão correto/esperado).
+        - "suggestion": Forneça a sugestão de refatoração estritamente no formato de bloco de código do GitHub Markdown (exemplo: ```linguagem \\n código aqui \\n ```). Certifique-se de usar os escapes de quebra de linha (\\n) adequadamente dentro da string JSON. Se não houver código para sugerir, retorne null.
+        - Forneça comentários APENAS se houver algo concreto para melhorar. Se não houver nada a pontuar, "reviews" deve retornar um array vazio: {{"reviews": []}}.
+        - IMPORTANTE: NUNCA sugira adicionar comentários de documentação no código (o código deve ser limpo e autoexplicativo)."""
+
         mode_specific_instructions = {
             ReviewMode.STRICT: """
-- Focus on ALL potential issues including minor style problems
-- Be very thorough and pedantic
-- Flag any deviation from best practices""",
+        - Foco em TODOS os possíveis problemas, incluindo questões mínimas de estilo e convenções.
+        - Seja extremamente minucioso e pedante.
+        - Sinalize (❌) qualquer desvio das melhores práticas da linguagem e clean code.""",
             
             ReviewMode.STANDARD: """
-- Focus on bugs, security issues, and performance problems
-- Include maintainability concerns
-- Skip minor style issues unless they impact readability""",
+        - Foco em bugs, falhas de segurança e gargalos de performance.
+        - Inclua alertas (⚠️) sobre problemas de manutenibilidade e design de código.
+        - Ignore problemas menores de estilo, a menos que prejudiquem significativamente a legibilidade.""",
             
             ReviewMode.LENIENT: """
-- Focus ONLY on critical bugs and security vulnerabilities
-- Skip style and minor maintainability issues
-- Be concise in feedback""",
+        - Foco APENAS em bugs que quebram o código (CRÍTICA) e vulnerabilidades de segurança (ALTA/CRÍTICA).
+        - Ignore completamente estilo e questões menores de manutenibilidade.
+        - Seja extremamente conciso no feedback e intervenha o mínimo possível.""",
             
             ReviewMode.SECURITY_FOCUSED: """
-- Focus EXCLUSIVELY on security vulnerabilities
-- Look for injection attacks, authentication issues, data exposure
-- Flag any security anti-patterns""",
+        - Foco EXCLUSIVO em vulnerabilidades de segurança.
+        - Procure ativamente por ataques de injeção, falhas de autenticação/autorização e exposição de dados sensíveis.
+        - Sinalize (❌) severamente qualquer antipadrão de segurança.""",
             
             ReviewMode.PERFORMANCE_FOCUSED: """
-- Focus EXCLUSIVELY on performance issues
-- Look for inefficient algorithms, memory leaks, unnecessary operations
-- Flag performance anti-patterns"""
+        - Foco EXCLUSIVO em problemas de performance e escalabilidade.
+        - Identifique (❌ ou ⚠️) algoritmos ineficientes, loops excessivos, vazamentos de memória (memory leaks) e operações de I/O desnecessárias.
+        - Sinalize qualquer antipadrão de desempenho."""
         }
         
         focus_instruction = mode_specific_instructions.get(self.review.review_mode, "")

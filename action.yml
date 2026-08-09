@@ -1,6 +1,6 @@
 name: "Gemini AI Code Reviewer"
 description: "This GitHub Action automatically reviews PRs using Google's Gemini AI model."
-author: 'truongnh1992'
+author: 'diogo5ds'
 branding:
   icon: 'zoom-in'
   color: 'blue'

@@ -1,89 +1,50 @@
-## Google Cloud credits are provided for this project `#VertexAISprint`
-Thanks, [Google](https://github.com/google) :)
+# Pacote Gemini Reviewer
 
-# Gemini AI Code Reviewer
+Este pacote contém os componentes principais do **Gemini AI Code Reviewer**, estruturados de forma modular para organizar o fluxo de revisão automática de código.
 
-A GitHub Action that automatically reviews pull requests using Google's Gemini AI.
+## Estrutura do Pacote
 
-## Features
-
-- Review your PRs using Gemini API
-- Give use comments and suggestions to improve the source codes
-
-![Demo](assets/img/Demo.png)
-![Demo2](assets/img/Demo2.png)
-[Video Demo](https://www.youtube.com/watch?v=pc1ffEFMIQo)
-
-## Setup
-
-1. To use this GitHub Action, you need an Gemini API key. If you don't have one, sign up for an API key
-   at [Google AI Studio](https://makersuite.google.com/app/apikey).
-
-2. Add the Gemini API key as a GitHub Secret in your repository with the name `GEMINI_API_KEY`. You can find more
-   information about GitHub Secrets [here](https://docs.github.com/en/actions/reference/encrypted-secrets).
-
-3. Create a `.github/workflows/code-review.yml` file in your repository and add the following content:
-
-```yaml
-name: Gemini AI Code Reviewer
-
-on:
-  issue_comment:
-    types: [created]
-
-permissions: write-all
-
-jobs:
-  gemini-code-review:
-    runs-on: ubuntu-latest
-    if: |
-      github.event.issue.pull_request &&
-      contains(github.event.comment.body, '/gemini-review')
-    steps:
-      - name: PR Info
-        run: |
-          echo "Comment: ${{ github.event.comment.body }}"
-          echo "Issue Number: ${{ github.event.issue.number }}"
-          echo "Repository: ${{ github.repository }}"
-
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Get PR Details
-        id: pr
-        run: |
-          PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.issue.number }})
-          echo "head_sha=$(echo $PR_JSON | jq -r .head.sha)" >> $GITHUB_OUTPUT
-          echo "base_sha=$(echo $PR_JSON | jq -r .base.sha)" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: truongnh1992/gemini-ai-code-reviewer@main
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: gemini-2.5-pro # Optional, default is `gemini-2.5-flash`
-          EXCLUDE: "*.md,*.txt,package-lock.json,*.yml,*.yaml"
+```text
+gemini_reviewer/
+├── __init__.py       # Inicialização e exportação do pacote
+├── models.py         # Estruturas de dados e modelos
+├── config.py         # Gerenciamento de configurações
+├── github_client.py  # Cliente de integração com a API do GitHub
+├── gemini_client.py  # Cliente de integração com a IA do Gemini
+├── diff_parser.py    # Lógica de processamento de alterações (Git diff)
+└── code_reviewer.py  # Classe principal que orquestra o sistema
 ```
-> if you don't set `GEMINI_MODEL`, the default model is `gemini-2.5-flash`. `gemini-2.5-flash` is a next-generation model offering speed and multimodal generation capabilities.  It's suitable for a wide variety of tasks, including code generation, data extraction, and text editing.. For the detailed information about the models, please refer to [Gemini models](https://ai.google.dev/gemini-api/docs/models/gemini).
-4. Commit codes to your repository, and working on your pull requests.
-5. When you're ready to review the PR, you can trigger the workflow by commenting `/gemini-review` in the PR.
 
-## How It Works
+## Visão Geral dos Módulos
 
-This GitHub Action uses the Gemini AI API to provide code review feedback. It works by:
+- **`models.py`**: Contém as estruturas de dados usadas na aplicação, como detalhes do Pull Request (PR), formato dos comentários e resultados da revisão.
+- **`config.py`**: Centraliza as configurações do sistema. Permite carregar dados de variáveis de ambiente e definir o rigor da revisão (estrito, padrão, etc.).
+- **`github_client.py`**: Gerencia a comunicação com o GitHub. É responsável por buscar as alterações de código e publicar os comentários no repositório.
+- **`gemini_client.py`**: Lida com a integração da IA. Envia o código modificado para o Gemini e estrutura os prompts para obter as melhores sugestões.
+- **`diff_parser.py`**: Analisa os arquivos modificados. Ele filtra o que precisa ser revisado, identifica a complexidade das mudanças e ignora arquivos binários.
+- **`code_reviewer.py`**: É o orquestrador do sistema. Ele conecta todos os módulos acima para executar o fluxo completo de revisão de ponta a ponta.
 
-1. **Analyzing the changes**: It grabs the code modifications from your pull request and filters out any files you don't want reviewed.
-2. **Consulting the Gemini model**: It sends chunks of the modified code to the Gemini for analysis.
-3. **Providing feedback**: Gemini AI examines the code and generates review comments.
-4. **Delivering the review**: The Action adds the comments directly to your pull request on GitHub.
+## Como Usar
 
-## License
+A interação com o pacote é feita de forma simples através da classe principal `CodeReviewer`:
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+```python
+from gemini_reviewer import Config, CodeReviewer
 
-## Star History ⭐️
+# 1. Carrega as configurações do ambiente
+config = Config.from_environment()
 
-[![Star History Chart](https://api.star-history.com/svg?repos=truongnh1992/gemini-ai-code-reviewer&type=Date)](https://star-history.com/#truongnh1992/gemini-ai-code-reviewer&Date)# gemini_ia_review_bot
+# 2. Instancia e executa o revisor de código
+with CodeReviewer(config) as reviewer:
+    result = await reviewer.review_pull_request(event_path)
+```
+
+## Princípios de Arquitetura
+
+Para garantir a qualidade do software, o pacote foi desenvolvido com base nos seguintes princípios:
+
+1. **Modularidade**: Cada módulo possui uma responsabilidade única e bem definida.
+2. **Testabilidade**: Os componentes são independentes, facilitando a criação de testes isolados.
+3. **Configuração Flexível**: Adaptável a diferentes ambientes sem necessidade de alterar o código-fonte.
+4. **Tratamento de Erros**: Previne falhas inesperadas e mantém a estabilidade do fluxo.
+5. **Desempenho**: Utiliza processamento concorrente para agilizar o tempo de resposta das revisões.

@@ -1,12 +1,5 @@
-"""
-Gemini AI Code Reviewer Package
-
-A comprehensive code review system powered by Google's Gemini AI.
-This package provides modular components for automated code review in GitHub pull requests.
-"""
-
-__version__ = "2.0.0"
-__author__ = "truongnh1992"
+__version__ = "1.0.0"
+__author__ = "diogo5ds"
 __description__ = "AI-powered code review system using Google's Gemini AI"
 
 # Import main classes for easy access
