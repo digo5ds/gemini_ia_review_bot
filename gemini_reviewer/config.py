@@ -257,10 +257,11 @@ class Config:
         Instruções:
         - Forneça sua resposta estritamente no seguinte formato JSON: 
         {"reviews": [{"startLine": <linha_inicial_nova>, "lineNumber": <linha_final_nova>, "criticality": "<BAIXA|MÉDIA|ALTA|CRÍTICA>", "reviewComment": "<comentario_markdown_completo>", "suggestion": "<codigo_puro_ou_null>"}]}
-        - "startLine" e "lineNumber": ATENÇÃO CRÍTICA! O GitHub precisa do intervalo exato para substituir blocos de múltiplas linhas. 
-          - "startLine" deve ser a primeira linha do bloco com erro na versão NOVA (lado direito do diff).
-          - "lineNumber" deve ser a última linha do bloco com erro na versão NOVA. 
-          - Se o erro ocorrer em apenas uma linha, ambos devem ter o mesmo valor. NUNCA aponte para linhas de contexto não alteradas.
+        - "startLine" e "lineNumber": ATENÇÃO CRÍTICA AO CÁLCULO DE LINHAS! Você não pode errar o alvo.
+          - Baseie-se no cabeçalho do diff (ex: @@ -x,y +A,B @@), onde 'A' é a linha inicial do arquivo NOVO (lado direito).
+          - Conte as linhas cuidadosamente (incluindo linhas de contexto e linhas com `+`, mas IGNORANDO linhas com `-`) a partir de 'A' para descobrir o número exato da linha com erro.
+          - VERIFICAÇÃO OBRIGATÓRIA: Antes de definir os números, verifique se o código existente nessas linhas é DE FATO o código com erro. NUNCA aponte para linhas de código válido (como declarações de variáveis ou imports).
+          - Se o erro estiver em uma única linha, startLine e lineNumber devem ser iguais.
         - "criticality": Deve ser classificada apenas como BAIXA, MÉDIA, ALTA ou CRÍTICA.
         - "reviewComment": Este campo construirá o corpo inteiro do comentário no GitHub. Você DEVE formatá-lo nesta ordem exata:
           1. Explique o problema de forma clara, iniciando com o símbolo adequado (❌, ⚠️ ou ✅).
