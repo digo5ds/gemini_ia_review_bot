@@ -256,14 +256,17 @@ class Config:
         base_prompt = """Sua tarefa é atuar como um engenheiro de software sênior revisando pull requests. 
         Instruções:
         - Forneça sua resposta estritamente no seguinte formato JSON: 
-        {"reviews": [{"lineNumber": <numero_da_linha_nova>, "criticality": "<BAIXA|MÉDIA|ALTA|CRÍTICA>", "reviewComment": "<comentario_markdown_completo>", "suggestion": "<codigo_puro_ou_null>"}]}
-        - "lineNumber": ATENÇÃO CRÍTICA! Este é o número que o GitHub usará para ancorar a sugestão. Deve ser EXATAMENTE o número da linha na versão NOVA do arquivo (lado direito do diff) onde o erro se encontra. Se o erro foi introduzido em uma linha adicionada (+), use o número exato dessa nova linha. NUNCA aponte para linhas de contexto não alteradas.
+        {"reviews": [{"startLine": <linha_inicial_nova>, "lineNumber": <linha_final_nova>, "criticality": "<BAIXA|MÉDIA|ALTA|CRÍTICA>", "reviewComment": "<comentario_markdown_completo>", "suggestion": "<codigo_puro_ou_null>"}]}
+        - "startLine" e "lineNumber": ATENÇÃO CRÍTICA! O GitHub precisa do intervalo exato para substituir blocos de múltiplas linhas. 
+          - "startLine" deve ser a primeira linha do bloco com erro na versão NOVA (lado direito do diff).
+          - "lineNumber" deve ser a última linha do bloco com erro na versão NOVA. 
+          - Se o erro ocorrer em apenas uma linha, ambos devem ter o mesmo valor. NUNCA aponte para linhas de contexto não alteradas.
         - "criticality": Deve ser classificada apenas como BAIXA, MÉDIA, ALTA ou CRÍTICA.
         - "reviewComment": Este campo construirá o corpo inteiro do comentário no GitHub. Você DEVE formatá-lo nesta ordem exata:
           1. Explique o problema de forma clara, iniciando com o símbolo adequado (❌, ⚠️ ou ✅).
           2. Pule uma linha e exiba um bloco `diff` reproduzindo o bloco (hunk) inteiro. Você deve espelhar os dados EXATAMENTE como recebeu no prompt. É proibido inventar, alterar ou resumir o código original. Exiba fielmente o que foi removido (`-` em vermelho) e o que foi adicionado (`+` em verde) no trecho.
-          3. SE houver uma correção, pule uma linha após o `diff`, adicione o título **Sugestão**, pule outra linha e abra um bloco interativo (```suggestion\\n código refatorado pronto para commit \\n```). A sugestão do bloco interativo DEVE substituir corretamente a linha que você apontou em "lineNumber". TUDO isso deve estar concatenado dentro deste campo "reviewComment", usando escapes de quebra de linha (\\n) para o JSON.
-        - "suggestion": Para manter a estrutura do JSON válida, retorne aqui apenas o código puro da correção (ou null se não houver). O botão interativo já foi renderizado no campo anterior.
+          3. SE houver uma correção, pule uma linha após o `diff`, adicione o título **Sugestão**, pule outra linha e abra um bloco interativo (```suggestion\\n código refatorado pronto para commit \\n```). A sugestão interativa DEVE substituir completamente o bloco de código delimitado por "startLine" e "lineNumber". TUDO isso deve estar concatenado dentro deste campo "reviewComment", usando escapes de quebra de linha (\\n) para o JSON.
+        - "suggestion": Para manter a estrutura, retorne aqui apenas o código puro da correção (ou null se não houver). O botão interativo já foi renderizado no campo anterior.
         - Forneça comentários APENAS se houver algo concreto para melhorar. Se não houver nada a pontuar, "reviews" deve retornar um array vazio: {"reviews": []}.
         - IMPORTANTE: NUNCA sugira adicionar comentários de documentação no código (o código deve ser limpo e autoexplicativo)."""
 
