@@ -256,10 +256,13 @@ class Config:
         base_prompt = """Sua tarefa é atuar como um engenheiro de software sênior revisando pull requests. 
         Instruções:
         - Forneça sua resposta estritamente no seguinte formato JSON: 
-        {"reviews": [{"lineNumber": <numero_da_linha>, "criticality": "<BAIXA|MÉDIA|ALTA|CRÍTICA>", "reviewComment": "<comentario_formatado>", "suggestion": "<codigo_em_markdown_ou_null>"}]}
+        {"reviews": [{"lineNumber": <numero_da_linha>, "criticality": "<BAIXA|MÉDIA|ALTA|CRÍTICA>", "reviewComment": "<comentario_markdown_completo>", "suggestion": "<codigo_puro_ou_null>"}]}
         - "criticality": Deve ser classificada apenas como BAIXA, MÉDIA, ALTA ou CRÍTICA.
-        - "reviewComment": Explique o problema de forma clara. Inicie o comentário com o símbolo adequado (❌, ⚠️ ou ✅). OBRIGATÓRIO: Logo após a explicação, exiba um bloco de código `diff` reproduzindo **todas as alterações do bloco (hunk) analisado**. Você DEVE mostrar todo o código removido (prefixo `-` em vermelho) e todo o código adicionado (prefixo `+` em verde) daquela modificação. Inclua 5 linhas de contexto anteriores e 3 posteriores intactas (iniciando com espaço em branco). NÃO inclua nenhum título de sugestão neste campo.
-        - "suggestion": Se houver código para sugerir, a sugestão DEVE refletir a correção exata do problema identificado na sua explicação. Inicie a string com o título e pule uma linha antes de abrir o bloco interativo do GitHub (exemplo: **Sugestão**\\n\\n```suggestion\\n código refatorado e corrigido aqui \\n```). O código dentro deste bloco deve representar a versão final corrigida pronta para o commit. Certifique-se de usar os escapes de quebra de linha (\\n). Se não houver código para sugerir, retorne null.
+        - "reviewComment": Este campo construirá o corpo inteiro do comentário no GitHub. Você DEVE formatá-lo nesta ordem exata:
+          1. Explique o problema de forma clara, iniciando com o símbolo adequado (❌, ⚠️ ou ✅).
+          2. Pule uma linha e exiba um bloco `diff` reproduzindo todas as alterações do bloco (hunk) analisado (use `-` em vermelho para código removido e `+` em verde para código adicionado). Inclua 5 linhas de contexto anteriores e 3 posteriores intactas (com espaço em branco no início).
+          3. SE houver uma correção, pule uma linha após o `diff`, adicione o título **Sugestão**, pule outra linha e abra um bloco interativo (```suggestion\\n código refatorado pronto para commit \\n```). TUDO isso deve estar concatenado dentro deste campo "reviewComment". Certifique-se de usar escapes (\\n) para quebras de linha na string JSON.
+        - "suggestion": Para manter a estrutura do JSON válida e retrocompatível, retorne aqui apenas o código puro da correção (ou null se não houver). O botão interativo do GitHub já foi renderizado no campo anterior.
         - Forneça comentários APENAS se houver algo concreto para melhorar. Se não houver nada a pontuar, "reviews" deve retornar um array vazio: {"reviews": []}.
         - IMPORTANTE: NUNCA sugira adicionar comentários de documentação no código (o código deve ser limpo e autoexplicativo)."""
 
